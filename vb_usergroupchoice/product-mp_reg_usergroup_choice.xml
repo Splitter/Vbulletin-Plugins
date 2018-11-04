@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<product productid="mp_reg_usergroup_choice" active="1">
+	<title>VB Usergroup Choice on Registration</title>
+	<description>Allow users to be placed in a certain usergroup based on a drop down menu in the registration form.</description>
+	<version>1.0</version>
+	<url />
+	<versioncheckurl />
+	<dependencies>
+	</dependencies>
+	<codes>
+	</codes>
+	<templates>
+		<template name="mp_usergroupchoice_field" templatetype="template" date="1216478473" username="Admin" version="1.0"><![CDATA[
+$mp_optionsgroup
+]]></template>
+	</templates>
+	<plugins>
+		<plugin active="1" executionorder="5">
+			<title>mp_usergroupchoice_ifemail</title>
+			<hookname>register_addmember_complete</hookname>
+			<phpcode><![CDATA[if($vbulletin->options['verifyemail']){
+$vbulletin->input->clean_gpc('p', 'accounttype',TYPE_INT);
+
+$accountusergroupid=$vbulletin->GPC['accounttype'];
+$mp_usergroup_ids=explode(" ",$vbulletin->options['mp_usergroupchoice_ids']);
+if(in_array($accountusergroupid,$mp_usergroup_ids)){
+$vbulletin->db->query_write("UPDATE " . TABLE_PREFIX . "useractivation SET usergroupid = '".$accountusergroupid."' WHERE activationid = '".$activateid."' LIMIT 1 ");
+}
+}]]></phpcode>
+		</plugin>
+		<plugin active="1" executionorder="5">
+			<title>mp_usergroupchoice_ifnotemail</title>
+			<hookname>register_addmember_process</hookname>
+			<phpcode><![CDATA[if(!$vbulletin->options['verifyemail']){
+$vbulletin->input->clean_gpc('p', 'accounttype',TYPE_INT);
+
+$accountusergroupid=$vbulletin->GPC['accounttype'];
+$mp_usergroup_ids=explode(" ",$vbulletin->options['mp_usergroupchoice_ids']);
+if(in_array($accountusergroupid,$mp_usergroup_ids)){
+
+$userdata->set('usergroupid', $accountusergroupid);
+}
+}]]></phpcode>
+		</plugin>
+		<plugin active="1" executionorder="5">
+			<title>mp_usergroupchoice_buildoptionslist</title>
+			<hookname>register_form_start</hookname>
+			<phpcode><![CDATA[$mp_usergroup_ids=explode(" ",$vbulletin->options['mp_usergroupchoice_ids']);
+$mp_usergroupsql="SELECT usergroupid, title FROM " . TABLE_PREFIX . "usergroup WHERE";
+$first=true;
+foreach($mp_usergroup_ids as $value){
+if(!$first){
+$mp_usergroupsql=$mp_usergroupsql." OR ";
+}
+else{
+$first=false;
+}
+$mp_usergroupsql=$mp_usergroupsql." usergroupid = '".$value."' ";
+}
+
+$mp_optionsgroup='<fieldset class="fieldset"><legend>'.$vbulletin->options['mp_usergroupchoic_fieldname'].'</legend> <table cellpadding="0" cellspacing="$stylevar[formspacer]" border="0" width="400"><tbody><tr><td colspan="2">'.$vbulletin->options['mp_usergroupchoice_fielddescription'].'</td></tr><tr><td style="padding-top:5px"><select name = "accounttype">';
+
+
+
+$checksec = $vbulletin->db->query_read($mp_usergroupsql);
+	if ($vbulletin->db->num_rows($checksec))
+	{
+		
+		while($lboard = $vbulletin->db->fetch_array($checksec))
+						{
+						$mp_optionsgroup=$mp_optionsgroup."<option value ='".$lboard['usergroupid']."'>".$lboard['title']."</option>";
+
+						}						
+	}
+$verifystring='$human_verify';
+$mp_optionsgroup=$mp_optionsgroup."</select></td></tr></table></fieldset>";
+
+
+$vbulletin->templatecache['register'] = str_replace($verifystring,fetch_template('mp_usergroupchoice_field').$verifystring,$vbulletin->templatecache['register']);]]></phpcode>
+		</plugin>
+	</plugins>
+	<phrases>
+		<phrasetype name="vBulletin Settings" fieldname="vbsettings">
+			<phrase name="setting_mp_usergroupchoic_fieldname_desc" date="1216769611" username="Admin" version="1.0"><![CDATA[The name to appear in the fieldset of the extra dropdown to be added.]]></phrase>
+			<phrase name="setting_mp_usergroupchoic_fieldname_title" date="1216769611" username="Admin" version="1.0"><![CDATA[Field Name]]></phrase>
+			<phrase name="setting_mp_usergroupchoice_fielddescription_desc" date="1216769602" username="Admin" version="1.0"><![CDATA[Optionally add a description for the field to the inside of the fieldset just as other options on the registration page have.]]></phrase>
+			<phrase name="setting_mp_usergroupchoice_fielddescription_title" date="1216769602" username="Admin" version="1.0"><![CDATA[Field Description]]></phrase>
+			<phrase name="setting_mp_usergroupchoice_ids_desc" date="1216764106" username="Admin" version="1.0"><![CDATA[Add all the usergroup ID's for the usergroups you wish to show up in the drop down menu seperated by a space.<br/><br/><br/>
+
+Note: The names of those usergroups associated with these IDs will be the options shown in the drop down list so name your usergroups appropriately.]]></phrase>
+			<phrase name="setting_mp_usergroupchoice_ids_title" date="1216764106" username="Admin" version="1.0"><![CDATA[Usergroup ID's]]></phrase>
+			<phrase name="settinggroup_mp_usergroupchoice" date="1216759278" username="Admin" version="1.0"><![CDATA[VB Usergroup Choice on Register]]></phrase>
+		</phrasetype>
+	</phrases>
+	<options>
+		<settinggroup name="mp_usergroupchoice" displayorder="600">
+			<setting varname="mp_usergroupchoic_fieldname" displayorder="1">
+				<datatype>free</datatype>
+				<defaultvalue>Usergroup</defaultvalue>
+			</setting>
+			<setting varname="mp_usergroupchoice_fielddescription" displayorder="2">
+				<datatype>free</datatype>
+			</setting>
+			<setting varname="mp_usergroupchoice_ids" displayorder="20">
+				<datatype>free</datatype>
+				<defaultvalue>2</defaultvalue>
+			</setting>
+		</settinggroup>
+	</options>
+	<helptopics>
+	</helptopics>
+	<cronentries>
+	</cronentries>
+	<faqentries>
+	</faqentries>
+</product>

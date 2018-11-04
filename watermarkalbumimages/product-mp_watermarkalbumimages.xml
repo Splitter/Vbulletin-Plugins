@@ -1,0 +1,343 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<product productid="mp_watermarkalbumimages" active="1">
+	<title>mp Watermark Album Images</title>
+	<description>Automatically add watermark to album images</description>
+	<version>2.0</version>
+	<url />
+	<versioncheckurl />
+	<dependencies>
+	</dependencies>
+	<codes>
+	</codes>
+	<templates>
+	</templates>
+	<plugins>
+		<plugin active="1" executionorder="5">
+			<title>mp_watermark_image_exists</title>
+			<hookname>image_exists</hookname>
+			<phpcode><![CDATA[if ($vbulletin->GPC['type'] == 'profile' and $vbulletin->options['mp_watermark_addprofile'] and $vbulletin->options['mp_watermark_enable'])
+	{
+		$wateri=imagecreatefrompng("watermark.png");
+		$theimage = imagecreatefromstring($imageinfo['filedata']);
+		
+$waterx=imagesx($wateri);
+$watery=imagesy($wateri);
+$theimagex=imagesx($theimage);
+$theimagey=imagesy($theimage);
+
+if($waterx > $theimagex){
+$nwaterx=$theimagex;
+$factor=$nwaterx/$waterx;
+$nwatery = round( $watery * $factor );
+}
+else{
+$nwaterx=$waterx;
+$nwatery=$watery;
+}
+
+if($nwatery>$theimagey){
+$nwatery=$theimagey;
+$factor=$nwatery/$watery;
+$nwaterx = round( $waterx * $factor );
+}
+$newwater = imagecreatetruecolor($nwaterx ,$nwatery);
+        imagealphablending($newwater, false);
+        $color = imagecolorallocatealpha($newwater, 0, 0, 0, 127);
+        imagefill($newwater, 0, 0, $color);
+        imagesavealpha($newwater, true);
+    imagecopyresampled($newwater, $wateri, 0, 0, 0, 0, $nwaterx, $nwatery, $waterx, $watery);
+    
+
+if($vbulletin->options['mp_watermark_posx']==0){
+$destx=0;
+}
+else{
+$destx=	imagesx($theimage)-imagesx($newwater);
+}
+if($vbulletin->options['mp_watermark_posy']==0){
+$desty=0;
+}
+else{
+	$desty=	imagesy($theimage)-imagesy($newwater);
+}
+
+	
+		imagecopy($theimage,$newwater,$destx,$desty,0,0,imagesx($newwater),imagesy($newwater));
+		
+			if ($imageinfo['extension'] == 'jpg' OR $imageinfo['extension'] == 'jpeg')
+			{
+				header('Content-type: image/jpeg');
+				imagejpeg($theimage);
+			}
+			else if ($imageinfo['extension'] == 'png')
+			{
+				header('Content-type: image/png');
+				imagepng($theimage);
+			}
+			else
+			{
+				header('Content-type: image/gif');
+				imagegif($theimage);
+			}
+			exit();
+			
+}]]></phpcode>
+		</plugin>
+		<plugin active="1" executionorder="5">
+			<title>mp_watermark_haveimage</title>
+			<hookname>picture_haveimage</hookname>
+			<phpcode><![CDATA[function imagecreatefromfile($path)
+                        {
+                            $info = @getimagesize($path);
+                           
+                            if(!$info)
+                            {
+                                return false;
+                            }                           
+                            $functions = array(
+                                IMAGETYPE_GIF => 'imagecreatefromgif',
+                                IMAGETYPE_JPEG => 'imagecreatefromjpeg',
+                                IMAGETYPE_PNG => 'imagecreatefrompng',
+                                IMAGETYPE_WBMP => 'imagecreatefromwbmp',
+                                IMAGETYPE_XBM => 'imagecreatefromwxbm',
+                                );
+                            if(!$functions[$info[2]])
+                            {
+                                return false;
+                            }
+                           
+                            if(!function_exists($functions[$info[2]]))
+                            {
+                                return false;
+                            }
+                           
+                            return $functions[$info[2]]($path);
+                        }
+if($vbulletin->options['mp_watermark_enable'] and $vbulletin->options['mp_watermark_addalbum']){
+
+if($vbulletin->GPC['thumb']!=1 or $vbulletin->options['mp_watermark_addthumb']){
+
+if ($have_image)
+{
+	header('Cache-control: max-age=0');
+	header('Expires: ' . gmdate('D, d M Y H:i:s', (TIMENOW)) . ' GMT');
+	header('Content-disposition: inline; filename=' . "user$imageinfo[userid]_pic$imageinfo[pictureid]_$imageinfo[dateline]" . ($vbulletin->GPC['thumb'] ? '_thumb' : '') . ".$imageinfo[extension]");
+	header('Content-transfer-encoding: binary');
+
+	header('Last-Modified: ' . gmdate('D, d M Y H:i:s', $imageinfo['dateline']) . ' GMT');
+	header('ETag: "' . $imageinfo['dateline'] . '-' . $imageinfo['pictureid'] . ($vbulletin->GPC['thumb'] ? '-thumb' : '') . '"');
+
+	$db->close();
+
+	if ($vbulletin->options['album_dataloc'] == 'db')
+	{	
+		$wateri=imagecreatefrompng("watermark.png");
+		$theimage = imagecreatefromstring($imageinfo['filedata']);
+		
+$waterx=imagesx($wateri);
+$watery=imagesy($wateri);
+$theimagex=imagesx($theimage);
+$theimagey=imagesy($theimage);
+
+if($waterx > $theimagex){
+$nwaterx=$theimagex;
+$factor=$nwaterx/$waterx;
+$nwatery = round( $watery * $factor );
+}
+else{
+$nwaterx=$waterx;
+$nwatery=$watery;
+}
+
+if($nwatery>$theimagey){
+$nwatery=$theimagey;
+$factor=$nwatery/$watery;
+$nwaterx = round( $waterx * $factor );
+}
+$newwater = imagecreatetruecolor($nwaterx ,$nwatery);
+        imagealphablending($newwater, false);
+        $color = imagecolorallocatealpha($newwater, 0, 0, 0, 127);
+        imagefill($newwater, 0, 0, $color);
+        imagesavealpha($newwater, true);
+    imagecopyresampled($newwater, $wateri, 0, 0, 0, 0, $nwaterx, $nwatery, $waterx, $watery);
+    
+
+if($vbulletin->options['mp_watermark_posx']==0){
+$destx=0;
+}
+else{
+$destx=	imagesx($theimage)-imagesx($newwater);
+}
+if($vbulletin->options['mp_watermark_posy']==0){
+$desty=0;
+}
+else{
+	$desty=	imagesy($theimage)-imagesy($newwater);
+}
+
+	
+		imagecopy($theimage,$newwater,$destx,$desty,0,0,imagesx($newwater),imagesy($newwater));
+		
+			if ($imageinfo['extension'] == 'jpg' OR $imageinfo['extension'] == 'jpeg')
+			{
+				header('Content-type: image/jpeg');
+				imagejpeg($theimage);
+			}
+			else if ($imageinfo['extension'] == 'png')
+			{
+				header('Content-type: image/png');
+				imagepng($theimage);
+			}
+			else
+			{
+				header('Content-type: image/gif');
+				imagegif($theimage);
+			}
+			exit();
+	}
+	else
+	{
+	
+	$wateri=imagecreatefrompng("watermark.png");
+					
+
+	$theimage=imagecreatefromfile(fetch_picture_fs_path($imageinfo, $vbulletin->GPC['thumb']));
+$waterx=imagesx($wateri);
+$watery=imagesy($wateri);
+$theimagex=imagesx($theimage);
+$theimagey=imagesy($theimage);
+
+if($waterx > $theimagex){
+$nwaterx=$theimagex;
+$factor=$nwaterx/$waterx;
+$nwatery = round( $watery * $factor );
+}
+else{
+$nwaterx=$waterx;
+$nwatery=$watery;
+}
+
+if($nwatery>$theimagey){
+$nwatery=$theimagey;
+$factor=$nwatery/$watery;
+$nwaterx = round( $waterx * $factor );
+}
+$newwater = imagecreatetruecolor($nwaterx ,$nwatery);
+        imagealphablending($newwater, false);
+        $color = imagecolorallocatealpha($newwater, 0, 0, 0, 127);
+        imagefill($newwater, 0, 0, $color);
+        imagesavealpha($newwater, true);
+    imagecopyresampled($newwater, $wateri, 0, 0, 0, 0, $nwaterx, $nwatery, $waterx, $watery);
+    
+
+if($vbulletin->options['mp_watermark_posx']==0){
+$destx=0;
+}
+else{
+$destx=	imagesx($theimage)-imagesx($newwater);
+}
+if($vbulletin->options['mp_watermark_posy']==0){
+$desty=0;
+}
+else{
+	$desty=	imagesy($theimage)-imagesy($newwater);
+}
+
+	
+		imagecopy($theimage,$newwater,$destx,$desty,0,0,imagesx($newwater),imagesy($newwater));
+		
+			
+	
+	
+	
+	
+	
+	if ($imageinfo['extension'] == 'jpg' OR $imageinfo['extension'] == 'jpeg')
+			{
+				header('Content-type: image/jpeg');
+				imagejpeg($theimage);
+			}
+			else if ($imageinfo['extension'] == 'png')
+			{
+				header('Content-type: image/png');
+				imagepng($theimage);
+			}
+			else
+			{
+				header('Content-type: image/gif');
+				imagegif($theimage);
+			}
+			exit();
+	}
+}
+else
+{
+	header('Content-type: image/gif');
+	readfile(DIR . '/' . $vbulletin->options['cleargifurl']);
+			exit();
+}
+
+
+
+}
+}]]></phpcode>
+		</plugin>
+	</plugins>
+	<phrases>
+		<phrasetype name="vBulletin Settings" fieldname="vbsettings">
+			<phrase name="setting_mp_watermark_addalbum_desc" date="1243483521" username="Admin" version="2.0"><![CDATA[Do you want to add watermarks to users album images.]]></phrase>
+			<phrase name="setting_mp_watermark_addalbum_title" date="1243483521" username="Admin" version="2.0"><![CDATA[Enable system for album images]]></phrase>
+			<phrase name="setting_mp_watermark_addprofile_desc" date="1243483378" username="Admin" version="2.0"><![CDATA[Do you want to display a watermark on your users profile pictures.]]></phrase>
+			<phrase name="setting_mp_watermark_addprofile_title" date="1243483378" username="Admin" version="2.0"><![CDATA[Add watermark to profile pictures?]]></phrase>
+			<phrase name="setting_mp_watermark_addthumb_desc" date="1243481665" username="Admin" version="2.0"><![CDATA[Do you want the watermark added to the thumbnail images as well as the fullsize images?]]></phrase>
+			<phrase name="setting_mp_watermark_addthumb_title" date="1243481665" username="Admin" version="2.0"><![CDATA[Add watermark to thumbnails?]]></phrase>
+			<phrase name="setting_mp_watermark_enable_desc" date="1243483359" username="Admin" version="2.0"><![CDATA[Enable/Disable the system]]></phrase>
+			<phrase name="setting_mp_watermark_enable_title" date="1243483359" username="Admin" version="2.0"><![CDATA[Enable Watermark System?]]></phrase>
+			<phrase name="setting_mp_watermark_posx_desc" date="1243483408" username="Admin" version="2.0"><![CDATA[Align the watermark image to the left or right edge of the destination image?]]></phrase>
+			<phrase name="setting_mp_watermark_posx_title" date="1243483408" username="Admin" version="2.0"><![CDATA[Align watermark X?]]></phrase>
+			<phrase name="setting_mp_watermark_posy_desc" date="1243483430" username="Admin" version="2.0"><![CDATA[Align the watermark image to the top or bottom edge of the destination image?]]></phrase>
+			<phrase name="setting_mp_watermark_posy_title" date="1243483430" username="Admin" version="2.0"><![CDATA[Align watermark Y?]]></phrase>
+			<phrase name="settinggroup_mp_watermark" date="1243477506" username="Admin" version="2.0"><![CDATA[mp Watermark Settings]]></phrase>
+		</phrasetype>
+	</phrases>
+	<options>
+		<settinggroup name="mp_watermark" displayorder="1010">
+			<setting varname="mp_watermark_enable" displayorder="10">
+				<datatype>boolean</datatype>
+				<optioncode>yesno</optioncode>
+				<defaultvalue>0</defaultvalue>
+			</setting>
+			<setting varname="mp_watermark_addalbum" displayorder="11">
+				<datatype>free</datatype>
+				<optioncode>yesno</optioncode>
+			</setting>
+			<setting varname="mp_watermark_addprofile" displayorder="14">
+				<datatype>free</datatype>
+				<optioncode>yesno</optioncode>
+			</setting>
+			<setting varname="mp_watermark_posx" displayorder="30">
+				<datatype>free</datatype>
+				<optioncode>select:piped
+0|left
+1|right</optioncode>
+			</setting>
+			<setting varname="mp_watermark_posy" displayorder="30">
+				<datatype>free</datatype>
+				<optioncode>select:piped
+0|top
+1|bottom</optioncode>
+			</setting>
+			<setting varname="mp_watermark_addthumb" displayorder="40">
+				<datatype>free</datatype>
+				<optioncode>yesno</optioncode>
+			</setting>
+		</settinggroup>
+	</options>
+	<helptopics>
+	</helptopics>
+	<cronentries>
+	</cronentries>
+	<faqentries>
+	</faqentries>
+</product>

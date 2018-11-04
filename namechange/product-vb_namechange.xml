@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<product productid="mp_namechange" active="1">
+	<title>VB Name Change</title>
+	<description />
+	<version>1.0.1</version>
+	<url />
+	<versioncheckurl />
+	<dependencies>
+	</dependencies>
+	<codes>
+		<code version="1.0.1">
+			<installcode><![CDATA[$vbulletin->db->hide_errors();
+
+$vbulletin->db->query_write("ALTER TABLE " . TABLE_PREFIX . "user ADD mplastchange int(10) DEFAULT '0' NOT NULL");
+$vbulletin->db->query_write("CREATE TABLE ".TABLE_PREFIX."mp_namechange_oldnames (id INT( 10 ) NOT NULL AUTO_INCREMENT PRIMARY KEY ,username VARCHAR( 255 ) NOT NULL ,userid INT( 10 ) NOT NULL)");
+
+$vbulletin->db->query_write("ALTER TABLE " . TABLE_PREFIX . "usergroup ADD mpusernamelimit double DEFAULT '0' NOT NULL");
+
+$vbulletin->db->show_errors();
+require_once(DIR . '/includes/class_bitfield_builder.php');
+
+    vB_Bitfield_Builder::save($db);
+    build_forum_permissions();]]></installcode>
+			<uninstallcode><![CDATA[$vbulletin->db->hide_errors();
+
+$vbulletin->db->query_write("ALTER TABLE " . TABLE_PREFIX . "user DROP mplastchange");
+$vbulletin->db->query_write("ALTER TABLE " . TABLE_PREFIX . "user DROP mplastnames");
+	
+
+$vbulletin->db->query_write("ALTER TABLE " . TABLE_PREFIX . "usergroup DROP mpusernamelimit");
+$vbulletin->db->query_write("drop table if exists ".TABLE_PREFIX."mp_namechange_oldnames");
+
+$vbulletin->db->show_errors();
+require_once(DIR . '/includes/class_bitfield_builder.php');
+
+    vB_Bitfield_Builder::save($db);
+    build_forum_permissions();]]></uninstallcode>
+		</code>
+	</codes>
+	<templates>
+		<template name="mp_namechange_form" templatetype="template" date="1221968718" username="admin" version="1.0.1"><![CDATA[<form action="namechange.php?do=save" method="post" >
+<input type="hidden" name="s" value="$session[sessionhash]" />
+<input type="hidden" name="securitytoken" value="$bbuserinfo[securitytoken]" />
+<input type="hidden" name="do" value="save" />
+
+
+<table class="tborder" width="100%" align="center" border="0" cellpadding="6" cellspacing="1">
+<tbody><tr>
+	<td class="thead">Change Username</td>
+</tr>
+<tr>
+	<td class="panelsurround" align="center">
+	<div class="panel">
+		<div style="width: 480px;" align="left">
+
+			$nameerrors
+			<fieldset class="fieldset">
+				<legend><label for="tb_customtext">Change Username</label></legend>
+				<table width="100%" border="0" cellpadding="0" cellspacing="3">
+				<tbody>
+				<tr>
+					<td>New Username<br><input class="bginput" name="newusername" id="tb_customtext" value="" size="50" maxlength="25" type="text"></td>
+				</tr>
+				<tr>
+					<td>Verify New Username<br><input class="bginput" name="verifyusername" id="tb_customtext" value="" size="50" maxlength="25" type="text"></td>
+				</tr>
+				</tbody></table>
+
+			</fieldset>
+		</div>
+	</div>
+	<div style="margin-top: 6px;">
+		<input class="button" value="Save Change" accesskey="s" type="submit">
+		<input class="button" value="Reset Fields" accesskey="r" type="reset">
+	</div>
+	</td>
+</tr>
+</tbody></table>
+</form>
+]]></template>
+		<template name="mp_namechange_nopermission" templatetype="template" date="1222049684" username="Admin" version="1.0.1"><![CDATA[<table class="tborder" width="100%" align="center" border="0" cellpadding="6" cellspacing="1">
+<tbody><tr>
+	<td class="thead">No Permission.</td>
+</tr>
+<tr>
+	<td class="panelsurround" align="center">
+
+$content
+
+	</td>
+</tr>
+</tbody></table>]]></template>
+		<template name="mp_namechange_table" templatetype="template" date="1221973118" username="admin" version="1.0.1"><![CDATA[<table class="tborder" width="100%" align="center" border="0" cellpadding="6" cellspacing="1">
+<tbody><tr>
+	<td class="thead">Username Changed.</td>
+</tr>
+<tr>
+	<td class="panelsurround" align="center">
+Username Changed Successfully!!
+	</td>
+</tr>
+</tbody></table>]]></template>
+	</templates>
+	<plugins>
+		<plugin active="1" executionorder="5">
+			<title>mp_namechange_class</title>
+			<hookname>usercp_nav_start</hookname>
+			<phpcode><![CDATA[$cells[]='namechange';]]></phpcode>
+		</plugin>
+	</plugins>
+	<phrases>
+		<phrasetype name="Control Panel Home Pages" fieldname="cphome">
+			<phrase name="mp_namechange_oldnames" date="1222052319" username="Admin" version="1.0.1"><![CDATA[Find Past Usernames]]></phrase>
+		</phrasetype>
+		<phrasetype name="GLOBAL" fieldname="global">
+			<phrase name="mp_namechange_class" date="1221962410" username="admin" version="1.0.1"><![CDATA[Change Username]]></phrase>
+			<phrase name="mp_namechange_settings" date="1221982015" username="Admin" version="1.0.1"><![CDATA[Namechange Time Limit]]></phrase>
+			<phrase name="mp_username_limit" date="1221983612" username="Admin" version="1.0.1"><![CDATA[Limit between name changes<br/>
+<dfn>(In days)</dfn>]]></phrase>
+		</phrasetype>
+	</phrases>
+	<options>
+	</options>
+	<helptopics>
+	</helptopics>
+	<cronentries>
+	</cronentries>
+	<faqentries>
+	</faqentries>
+</product>

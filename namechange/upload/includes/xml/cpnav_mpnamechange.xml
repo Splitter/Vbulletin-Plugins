@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<navgroups>
+        <navgroup phrase="users" permissions="canadminusers" displayorder="110">
+
+		<navoption displayorder="110">
+			<phrase>mp_namechange_oldnames</phrase>
+			<link>namechange.php</link>
+		</navoption>
+
+		</navgroup> 
+				
+</navgroups>

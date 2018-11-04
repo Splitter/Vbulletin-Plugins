@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<bitfields product="vbulletin">
+	<bitfielddefs>
+		<group name="ugp">
+			<group name="mp_namechange_settings">
+				<bitfield intperm="true" name="mpusernamelimit" group="mp_namechange_settings"  phrase="mp_username_limit">0</bitfield>				
+			</group>
+		</group>
+	</bitfielddefs>
+</bitfields>

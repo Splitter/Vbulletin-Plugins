@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<product productid="mp_troll_manager" active="1">
+	<title>VB Troll and Spammer Manager</title>
+	<description>Helps manage trolls and spammers</description>
+	<version>1.0</version>
+	<url />
+	<versioncheckurl />
+	<dependencies>
+	</dependencies>
+	<codes>
+		<code version="1.0">
+			<installcode><![CDATA[$vbulletin->db->hide_errors();			
+				$vbulletin->db->query_write("CREATE TABLE IF NOT EXISTS " . TABLE_PREFIX . "mp_troll_manager (trollusers int(32))");
+
+
+					$vbulletin->db->query_write("INSERT INTO " . TABLE_PREFIX . "mp_troll_manager (trollusers) VALUES ('1')");
+$vbulletin->db->query_write("INSERT INTO " . TABLE_PREFIX . "mp_troll_manager (trollusers) VALUES ('0')");
+
+				
+				$vbulletin->db->show_errors();]]></installcode>
+			<uninstallcode><![CDATA[$vbulletin->db->hide_errors();
+
+				$vbulletin->db->query_write("DROP TABLE IF EXISTS " . TABLE_PREFIX . "mp_troll_manager");
+				$vbulletin->db->show_errors();]]></uninstallcode>
+		</code>
+	</codes>
+	<templates>
+	</templates>
+	<plugins>
+		<plugin active="1" executionorder="5">
+			<title>VB Troll Check</title>
+			<hookname>global_start</hookname>
+			<phpcode><![CDATA[$join=$vbulletin->userinfo['joindate'];
+$mseconds = time() - $join;
+$mhours= round($mseconds / 3600);
+if($mhours<$vbulletin->options['mp_troll_hours']&&$vbulletin->userinfo['posts']>=$vbulletin->options['mp_troll_numposts']){
+$checksec = $vbulletin->db->query_read("SELECT * FROM " . TABLE_PREFIX . "mp_troll_manager WHERE trollusers='".$vbulletin->userinfo['userid']."'");
+				if ($vbulletin->db->num_rows($checksec)<=0)
+				{
+$vbulletin->db->query_write("INSERT INTO " . TABLE_PREFIX . "mp_troll_manager (trollusers) VALUES ('".$vbulletin->userinfo['userid']."')");
+$checksec2 = $vbulletin->db->query_read("SELECT * FROM " . TABLE_PREFIX . "setting WHERE varname = 'globalignore' LIMIT 1 ");
+$lboard = $vbulletin->db->fetch_array($checksec2);
+$newvalue=$lboard['value']." ".$vbulletin->userinfo['userid'];
+$vbulletin->db->query_write("UPDATE " . TABLE_PREFIX . "setting SET value = '".$newvalue."' WHERE varname = 'globalignore' LIMIT 1 ");
+if($vbulletin->options['mp_troll_miserable']!=0){
+	$mp_userdata =& datamanager_init('User', $vbulletin, ERRTYPE_CP);
+	$mp_userdata->adminoverride = true;
+	$mp_userinfo = fetch_userinfo($vbulletin->userinfo['userid']);
+	$mp_userdata->set_existing($mp_userinfo);
+	$mp_userdata->set('usergroupid', $vbulletin->options['mp_troll_miserable']); 
+	$mp_userdata->save();
+}
+
+
+$pmdm =& datamanager_init('PM', $vbulletin, ERRTYPE_ARRAY);
+
+	$pmdm->set_info('savecopy',      0);
+	$pmdm->set_info('receipt',       0);
+	$pmdm->set_info('cantrackpm',    0);
+	$pmdm->set_info('parentpmid',    0);
+	$pmdm->set_info('forward',       0);
+	$pmdm->set_info('bccrecipients', '');
+	$pmdm->overridequota = true;
+	$title="I might be a troll.";
+	$message="Please check me out as I may be a troll    \n[URL='".$vbulletin->options['bburl']."/member.php?u=".$vbulletin->userinfo['userid']."']Check Me Out![/URL]";
+	$iconid=0;
+	$pmdm->set('fromuserid', $vbulletin->userinfo['userid']);
+	$pmdm->set('fromusername', $vbulletin->userinfo['username']);
+	$pmdm->setr('title', $title);
+	$pmdm->set_recipients($vbulletin->options['mp_trollmanager_admin'], $permissions, 'cc');
+	$pmdm->set_recipients('', $permissions, 'bcc');
+	$pmdm->setr('message', $message);
+	$pmdm->setr('iconid', $iconid);
+	$pmdm->set('dateline', TIMENOW);
+	$pmdm->setr('showsignature', $iconid);
+	$pmdm->set('allowsmilie', $iconid );
+	$pmdm->save();
+if($vbulletin->options['mp_trollmanager_delete']){
+$threads = $vbulletin->db->query_read("
+		SELECT *
+		FROM " . TABLE_PREFIX . "thread AS thread
+		LEFT JOIN " . TABLE_PREFIX . "forum AS forum USING(forumid)
+		WHERE postusername = '" .$vbulletin->userinfo['username']. "'");
+	while ($thread = $vbulletin->db->fetch_array($threads))
+	{
+		$threadman =& datamanager_init('Thread', $vbulletin, ERRTYPE_SILENT, 'threadpost');
+		$threadman->set_existing($thread);
+		$threadman->delete(0,false);
+		unset($threadman);
+
+		vbflush();
+	}
+	$posts = $vbulletin->db->query_read("
+		SELECT *
+		FROM " . TABLE_PREFIX . "post AS post,
+			" . TABLE_PREFIX . "thread AS thread
+		LEFT JOIN " . TABLE_PREFIX . "forum AS forum USING(forumid)
+		WHERE 
+			post.threadid = thread.threadid AND
+			post.userid = " . $vbulletin->userinfo['userid'] . "
+	");
+
+	while ($post = $vbulletin->db->fetch_array($posts))
+	{
+		$postman =& datamanager_init('Post', $vbulletin, ERRTYPE_SILENT, 'threadpost');
+		$postman->set_existing($post);
+		$postman->delete(false,$post['threadid'],false);
+		unset($postman);
+
+		echo ". \n";
+		vbflush();
+	}
+}
+}
+}]]></phpcode>
+		</plugin>
+	</plugins>
+	<phrases>
+		<phrasetype name="vBulletin Settings" fieldname="vbsettings">
+			<phrase name="setting_mp_troll_hours_desc" date="1239950823" username="Admin" version="1.0"><![CDATA[Set the amount of hours you want to pass after registration before the system stops considering user as a potential troll/spammer]]></phrase>
+			<phrase name="setting_mp_troll_hours_title" date="1239950823" username="Admin" version="1.0"><![CDATA[Hours to consider possible troll/spammer]]></phrase>
+			<phrase name="setting_mp_troll_miserable_desc" date="1239950727" username="Admin" version="1.0"><![CDATA[You can optionally setup a usergroup with limited permissions to move potential trolls/spammers to or use another mod such as Miserable Users. Enter the usergroup ID of the usergroup to move the potential trolls/spammers to or Leave it at 0 to disable this option.]]></phrase>
+			<phrase name="setting_mp_troll_miserable_title" date="1239950727" username="Admin" version="1.0"><![CDATA[Usergroup ID to move trolls/spammers to]]></phrase>
+			<phrase name="setting_mp_troll_numposts_desc" date="1216526980" username="Admin" version="1.0"><![CDATA[Number of posts to allow user to have within timeframe before action is taken]]></phrase>
+			<phrase name="setting_mp_troll_numposts_title" date="1216526980" username="Admin" version="1.0"><![CDATA[Number of posts before action]]></phrase>
+			<phrase name="setting_mp_trollmanager_admin_desc" date="1239950556" username="Admin" version="1.0"><![CDATA[Username of the administrator who will receive a PM to review potential trolls/spammers]]></phrase>
+			<phrase name="setting_mp_trollmanager_admin_title" date="1239950556" username="Admin" version="1.0"><![CDATA[Admins Username]]></phrase>
+			<phrase name="setting_mp_trollmanager_delete_desc" date="1239951883" username="Admin" version="1.0"><![CDATA[Do you want the mod to soft delete all threads started and posts made by the potential troll/spammer?]]></phrase>
+			<phrase name="setting_mp_trollmanager_delete_title" date="1239951883" username="Admin" version="1.0"><![CDATA[Soft Delete Posts/Threads?]]></phrase>
+			<phrase name="settinggroup_mptrollmanager" date="1216525781" username="Admin" version="1.0"><![CDATA[VB Troll/Spammer Manager]]></phrase>
+		</phrasetype>
+	</phrases>
+	<options>
+		<settinggroup name="mptrollmanager" displayorder="590">
+			<setting varname="mp_troll_hours" displayorder="20">
+				<datatype>number</datatype>
+				<defaultvalue>1</defaultvalue>
+			</setting>
+			<setting varname="mp_troll_numposts" displayorder="30">
+				<datatype>number</datatype>
+				<defaultvalue>5</defaultvalue>
+			</setting>
+			<setting varname="mp_troll_miserable" displayorder="40">
+				<datatype>number</datatype>
+				<defaultvalue>0</defaultvalue>
+			</setting>
+			<setting varname="mp_trollmanager_admin" displayorder="50">
+				<datatype>free</datatype>
+				<defaultvalue>admin</defaultvalue>
+			</setting>
+			<setting varname="mp_trollmanager_delete" displayorder="60">
+				<datatype>free</datatype>
+				<optioncode>yesno</optioncode>
+			</setting>
+		</settinggroup>
+	</options>
+	<helptopics>
+	</helptopics>
+	<cronentries>
+	</cronentries>
+	<faqentries>
+	</faqentries>
+</product>
